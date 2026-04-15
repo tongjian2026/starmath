@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>星星数学教练 · 计算力诊断</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f1a;
+    --bg2:       #141728;
+    --bg3:       #1c2038;
+    --bg4:       #222744;
+    --border:    rgba(255,255,255,0.08);
+    --border-hi: rgba(255,255,255,0.18);
+    --text:      #e8eaf6;
+    --text-sub:  #8b90b8;
+    --text-dim:  #555a80;
+    --accent:    #7c8cff;
+    --accent2:   #a78bfa;
+    --green:     #34d399;
+    --green-dim: rgba(52,211,153,0.12);
+    --amber:     #fbbf24;
+    --amber-dim: rgba(251,191,36,0.12);
+    --red:       #f87171;
+    --red-dim:   rgba(248,113,113,0.12);
+    --gold:      #fde68a;
+    --radius:    14px;
+    --radius-sm: 10px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ── starfield canvas ── */
+  #starfield {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 540px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .screen { display: none; }
+  .screen.on { display: block; }
+
+  /* ── brand ── */
+  .brand {
+    text-align: center;
+    padding: 28px 0 20px;
+  }
+  .brand-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+    display: block;
+    filter: drop-shadow(0 0 12px rgba(124,140,255,0.6));
+  }
+  .brand-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: .5px;
+  }
+  .brand-sub {
+    font-size: 13px;
+    color: var(--accent);
+    margin-top: 5px;
+    letter-spacing: 1px;
+  }
+
+  /* ── card ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+
+  /* ── note box ── */
+  .note-box {
+    background: rgba(124,140,255,0.08);
+    border: 1px solid rgba(124,140,255,0.2);
+    border-radius: var(--radius-sm);
+    padding: 13px 15px;
+    font-size: 13px;
+    color: #a5b0ff;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  /* ── grade grid ── */
+  .grade-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px;
+    margin: 14px 0;
+  }
+  .grade-btn {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 13px 6px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--bg3);
+    color: var(--text-sub);
+    text-align: center;
+    transition: all .15s;
+    line-height: 1.4;
+  }
+  .grade-btn small { display: block; font-size: 12px; color: var(--text-dim); font-weight: 400; margin-top: 3px; }
+  .grade-btn:hover { border-color: var(--accent); color: var(--text); background: var(--bg4); }
+  .grade-btn.sel {
+    border-color: var(--accent);
+    background: rgba(124,140,255,0.15);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: 0 0 0 1px rgba(124,140,255,0.3);
+  }
+
+  /* ── buttons ── */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-align: center;
+    transition: all .15s;
+    margin-top: 10px;
+    letter-spacing: .3px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #5c6ef0, #8b5cf6);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(92,110,240,0.35);
+  }
+  .btn-primary:hover { opacity: .88; box-shadow: 0 6px 24px rgba(92,110,240,0.45); }
+  .btn-outline {
+    background: transparent;
+    color: var(--text-sub);
+    border: 1px solid var(--border-hi);
+  }
+  .btn-outline:hover { background: var(--bg3); color: var(--text); }
+
+  /* ── question screen ── */
+  .q-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .q-num { font-size: 14px; color: var(--text-dim); font-weight: 500; }
+  .timer {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 20px;
+    background: var(--bg3);
+    color: var(--text-sub);
+    border: 1px solid var(--border);
+    transition: all .3s;
+  }
+  .timer.warn { background: var(--amber-dim); color: var(--amber); border-color: rgba(251,191,36,0.3); }
+
+  .progress-wrap { margin-bottom: 18px; }
+  .progress-track {
+    height: 3px;
+    background: var(--bg4);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width .4s ease;
+    box-shadow: 0 0 8px rgba(124,140,255,0.6);
+  }
+
+  .q-body {
+    font-size: 44px;
+    font-weight: 700;
+    text-align: center;
+    padding: 30px 0 24px;
+    color: var(--text);
+    letter-spacing: 4px;
+    text-shadow: 0 0 30px rgba(124,140,255,0.25);
+  }
+
+  .opts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+  }
+  .opt {
+    padding: 18px 10px;
+    border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm);
+    font-size: 22px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--bg3);
+    color: var(--text);
+    text-align: center;
+    transition: all .12s;
+  }
+  .opt:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(124,140,255,0.12);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .opt.correct { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+  .opt.wrong   { background: var(--red-dim);   border-color: var(--red);   color: var(--red);   }
+  .opt:disabled { cursor: default; transform: none; }
+
+  .feedback {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    min-height: 32px;
+    padding: 8px 0;
+  }
+  .feedback.ok  { color: var(--green); }
+  .feedback.bad { color: var(--red); }
+
+  /* ── report ── */
+  .level-pill {
+    display: inline-block;
+    padding: 5px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    letter-spacing: .3px;
+  }
+  .report-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; line-height: 1.5; }
+  .report-desc  { font-size: 14px; color: var(--text-sub); line-height: 1.85; }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 16px -20px;
+  }
+  .stat-cell {
+    padding: 12px 6px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-num { font-size: 22px; font-weight: 700; color: var(--text); }
+  .stat-lbl  { font-size: 11px; color: var(--text-dim); margin-top: 3px; line-height: 1.3; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  .section-title::before {
+    content: '✦';
+    font-size: 11px;
+    color: var(--accent2);
+  }
+
+  .dual-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .axis-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    background: var(--bg3);
+  }
+  .axis-label { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+  .axis-val   { font-size: 20px; font-weight: 700; }
+  .axis-track { height: 4px; background: var(--bg4); border-radius: 2px; margin: 8px 0 6px; }
+  .axis-bar   { height: 4px; border-radius: 2px; }
+  .axis-note  { font-size: 12px; color: var(--text-dim); line-height: 1.55; }
+
+  .issue-list { display: flex; flex-direction: column; gap: 8px; }
+  .issue-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg3);
+  }
+  .issue-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .issue-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+  }
+  .issue-text { font-size: 13px; color: var(--text-sub); line-height: 1.7; }
+
+  /* step map */
+  .step-list { display: flex; flex-direction: column; gap: 6px; }
+  .step-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg3);
+  }
+  .step-item.target {
+    border-color: rgba(124,140,255,0.5);
+    border-width: 1.5px;
+    background: rgba(124,140,255,0.08);
+    box-shadow: 0 0 16px rgba(124,140,255,0.1);
+  }
+  .step-item.done {
+    background: rgba(52,211,153,0.06);
+    border-color: rgba(52,211,153,0.2);
+  }
+  .step-circle {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    flex-shrink: 0;
+    background: var(--bg4);
+    color: var(--text-dim);
+  }
+  .step-item.target .step-circle { background: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(124,140,255,0.5); }
+  .step-item.done   .step-circle { background: var(--green);  color: #0d1a14; }
+  .step-name   { font-size: 14px; font-weight: 600; color: var(--text); }
+  .step-detail { font-size: 12px; color: var(--text-dim); margin-top: 3px; line-height: 1.55; }
+  .step-status {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 8px;
+    margin-top: 5px;
+    background: var(--bg4);
+    color: var(--text-dim);
+  }
+  .step-item.target .step-status { background: rgba(124,140,255,0.2); color: var(--accent); font-weight: 600; }
+  .step-item.done   .step-status { background: rgba(52,211,153,0.15); color: var(--green); }
+
+  /* module rec */
+  .mod-box {
+    background: rgba(124,140,255,0.06);
+    border: 1px solid rgba(124,140,255,0.2);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+  .mod-name   { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 7px; }
+  .mod-detail { font-size: 13px; color: var(--text-sub); line-height: 1.85; }
+  .price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 13px;
+    padding-top: 13px;
+    border-top: 1px solid var(--border);
+  }
+  .price-now  { font-size: 24px; font-weight: 700; color: var(--gold); }
+  .price-orig { font-size: 13px; color: var(--text-dim); text-decoration: line-through; margin-left: 6px; }
+  .price-note { font-size: 12px; color: var(--text-dim); }
+
+  .divider { height: 1px; background: var(--border); margin: 16px -20px; }
+
+  @media (max-width: 360px) {
+    .q-body { font-size: 28px; }
+    .opt { font-size: 17px; }
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .stat-cell:nth-child(2) { border-right: none; }
+    .stat-cell:nth-child(3) { border-right: 1px solid var(--border); border-top: 1px solid var(--border); }
+    .stat-cell:nth-child(4) { border-top: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="container">
+
+  <!-- ═══ SCREEN 0: START ═══ -->
+  <div class="screen on" id="s0">
+    <div class="brand">
+      <span class="brand-icon">✦</span>
+      <div class="brand-name">星星数学教练</div>
+      <div class="brand-sub">星星数感精练 · 计算力诊断</div>
+    </div>
+
+    <div class="note-box">
+      共10道题，约5分钟。系统会同时记录<strong>正确率</strong>和<strong>作答速度</strong>，生成双维度分析报告，基于星星数感精练体系精确定位孩子当前的成长阶段。
+    </div>
+
+    <div class="card">
+      <div class="section-title">选择孩子年级</div>
+      <div class="grade-grid">
+        <button class="grade-btn" onclick="selectGrade(1,this)">一年级<small>6–7岁</small></button>
+        <button class="grade-btn" onclick="selectGrade(2,this)">二年级<small>7–8岁</small></button>
+        <button class="grade-btn" onclick="selectGrade(3,this)">三年级<small>8–9岁</small></button>
+        <button class="grade-btn" onclick="selectGrade(4,this)">四年级<small>9–10岁</small></button>
+        <button class="grade-btn" onclick="selectGrade(5,this)">五年级<small>10–11岁</small></button>
+        <button class="grade-btn" onclick="selectGrade(6,this)">六年级<small>11–12岁</small></button>
+      </div>
+      <p style="font-size:12px;color:var(--text-sub);line-height:1.6;margin-top:4px">请让孩子独立作答，家长在旁边不要提示答案</p>
+      <button class="btn btn-primary" onclick="startTest()">开始诊断测试</button>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 1: QUESTION ═══ -->
+  <div class="screen" id="s1">
+    <div style="padding: 8px 0 4px">
+      <div class="q-header">
+        <span class="q-num" id="q-num-label">第1题 / 共10题</span>
+        <span class="timer" id="timer-display">0秒</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-bar" style="width:10%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="q-body" id="question-text">3 + 5 = ?</div>
+      <div class="opts-grid" id="options-grid"></div>
+      <div class="feedback" id="feedback-text"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 2: REPORT ═══ -->
+  <div class="screen" id="s2">
+    <div class="brand" style="padding: 16px 0 12px">
+      <span class="brand-icon" style="font-size:32px">✦</span>
+      <div class="brand-name" style="font-size:18px">星星数学教练</div>
+      <div class="brand-sub">计算力诊断报告</div>
+    </div>
+    <div class="card" id="report-card">
+      <!-- filled by JS -->
+    </div>
+    <button class="btn btn-outline" onclick="restartTest()">重新测试</button>
+    <p style="text-align:center;font-size:12px;color:var(--text-sub);margin-top:16px;line-height:1.6">截图此报告 · 发给老师或客服 · 获取个性化学习方案</p>
+  </div>
+
+</div>
+
+<script>
+// ── data ──────────────────────────────────────────────────────────────
+var grade = 0;
+var questionIndex = 0;
+var results = [];
+var timerSeconds = 0;
+var timerInterval = null;
+var questionStartTime = 0;
+
+var STEPS = [
+  { n: '①', name: '数感一 · 符号、概念、逻辑', desc: '建立对数字符号的感知，理解运算概念背后的逻辑意义' },
+  { n: '②', name: '数感二 · 计算方法',          desc: '掌握每种运算的基本方法，稳定地算出正确结果' },
+  { n: '③', name: '数感三 · 数字游戏',          desc: '在数字的变化与组合中发现规律，感受数学的趣味节奏' },
+  { n: '④', name: '数感四 · 思维训练',          desc: '从不同角度看待运算关系，训练灵活的数学思维' },
+  { n: '⑤', name: '数感五 · 最佳路径',          desc: '找到最简洁高效的计算路径，让答案自然脱口而出' },
+  { n: '⑥', name: '数感六 · 灵活运用',          desc: '面对各种变化题型时能从容切换，融会贯通地运用' }
+];
+
+// step_ok  = 能答对说明至少达到这一步
+// step_slow = 答对但偏慢说明卡在这一步
+var BANKS = {
+1: [
+  { q:'7 + 6 = ?',  a:'13', opts:['12','13','14','11'], tag:'20以内加法',   module:'M1', step_ok:2, step_slow:2 },
+  { q:'15 - 8 = ?', a:'7',  opts:['6','7','8','9'],     tag:'20以内退位减', module:'M1', step_ok:2, step_slow:3 },
+  { q:'9 + 5 = ?',  a:'14', opts:['13','14','15','12'], tag:'凑十加法',     module:'M1', step_ok:3, step_slow:2 },
+  { q:'13 - 7 = ?', a:'6',  opts:['5','6','7','8'],     tag:'20以内退位减', module:'M1', step_ok:3, step_slow:3 },
+  { q:'8 + 7 = ?',  a:'15', opts:['14','15','16','13'], tag:'凑十法内化',   module:'M1', step_ok:3, step_slow:5 },
+  { q:'16 - 9 = ?', a:'7',  opts:['6','7','8','5'],     tag:'20以内退位减', module:'M1', step_ok:3, step_slow:5 },
+  { q:'? + 5 = 12', a:'7',  opts:['6','7','8','9'],     tag:'思维训练',     module:'M1', step_ok:4, step_slow:4 },
+  { q:'18 - ? = 9', a:'9',  opts:['8','9','10','7'],    tag:'思维训练',     module:'M1', step_ok:4, step_slow:4 },
+  { q:'6 + 8 = ?',  a:'14', opts:['13','14','15','12'], tag:'20以内速算',   module:'M1', step_ok:5, step_slow:5 },
+  { q:'17 - 8 = ?', a:'9',  opts:['8','9','10','7'],    tag:'20以内速算',   module:'M1', step_ok:5, step_slow:5 }
+],
+2: [
+  { q:'35 + 48 = ?',  a:'83', opts:['82','83','84','81'], tag:'100以内进位加', module:'M2', step_ok:2, step_slow:2 },
+  { q:'72 - 35 = ?',  a:'37', opts:['36','37','38','39'], tag:'100以内退位减', module:'M2', step_ok:2, step_slow:3 },
+  { q:'56 + 37 = ?',  a:'93', opts:['92','93','94','91'], tag:'100以内进位加', module:'M2', step_ok:3, step_slow:2 },
+  { q:'81 - 46 = ?',  a:'35', opts:['34','35','36','33'], tag:'100以内退位减', module:'M2', step_ok:3, step_slow:3 },
+  { q:'48 + ? = 85',  a:'37', opts:['36','37','38','39'], tag:'思维训练',      module:'M2', step_ok:4, step_slow:4 },
+  { q:'? - 17 = 45',  a:'62', opts:['61','62','63','60'], tag:'思维训练',      module:'M2', step_ok:4, step_slow:4 },
+  { q:'67 + 25 = ?',  a:'92', opts:['91','92','93','90'], tag:'100以内进位加', module:'M2', step_ok:5, step_slow:5 },
+  { q:'54 - 37 = ?',  a:'17', opts:['16','17','18','19'], tag:'100以内退位减', module:'M2', step_ok:5, step_slow:5 },
+  { q:'29 + 43 = ?',  a:'72', opts:['71','72','73','70'], tag:'100以内进位加', module:'M2', step_ok:5, step_slow:3 },
+  { q:'93 - 58 = ?',  a:'35', opts:['34','35','36','37'], tag:'100以内退位减', module:'M2', step_ok:3, step_slow:5 }
+],
+3: [
+  { q:'7 × 8 = ?',   a:'56',  opts:['54','56','58','48'],   tag:'乘法计算',    module:'M3', step_ok:2, step_slow:2 },
+  { q:'63 ÷ 9 = ?',  a:'7',   opts:['6','7','8','5'],       tag:'除法计算',    module:'M3', step_ok:2, step_slow:2 },
+  { q:'6 × 7 = ?',   a:'42',  opts:['40','42','44','36'],   tag:'乘法计算',    module:'M3', step_ok:3, step_slow:2 },
+  { q:'56 ÷ 7 = ?',  a:'8',   opts:['7','8','9','6'],       tag:'除法计算',    module:'M3', step_ok:3, step_slow:3 },
+  { q:'? × 8 = 72',  a:'9',   opts:['8','9','10','7'],      tag:'思维训练',    module:'M3', step_ok:4, step_slow:4 },
+  { q:'35 ÷ ? = 5',  a:'7',   opts:['6','7','8','5'],       tag:'思维训练',    module:'M3', step_ok:4, step_slow:4 },
+  { q:'234+178= ?',  a:'412', opts:['411','412','413','402'],tag:'三位数加法',  module:'M4', step_ok:2, step_slow:2 },
+  { q:'502-247= ?',  a:'255', opts:['254','255','256','265'],tag:'三位数退位减',module:'M4', step_ok:2, step_slow:3 },
+  { q:'9 × 6 = ?',   a:'54',  opts:['48','54','56','63'],   tag:'乘法速算',    module:'M3', step_ok:5, step_slow:5 },
+  { q:'48 ÷ 6 = ?',  a:'8',   opts:['7','8','9','6'],       tag:'除法速算',    module:'M3', step_ok:5, step_slow:5 }
+],
+4: [
+  { q:'23 × 4 = ?',  a:'92',  opts:['88','92','96','84'],    tag:'两位数乘法', module:'M5', step_ok:2, step_slow:2 },
+  { q:'126 ÷ 6 = ?', a:'21',  opts:['20','21','22','23'],    tag:'三位数除法', module:'M6', step_ok:2, step_slow:2 },
+  { q:'48 × 5 = ?',  a:'240', opts:['230','240','250','220'],tag:'两位数乘法', module:'M5', step_ok:3, step_slow:2 },
+  { q:'315 ÷ 5 = ?', a:'63',  opts:['62','63','64','65'],    tag:'三位数除法', module:'M6', step_ok:3, step_slow:3 },
+  { q:'? × 7 = 196', a:'28',  opts:['26','27','28','29'],    tag:'思维训练',   module:'M5', step_ok:4, step_slow:4 },
+  { q:'? ÷ 9 = 56',  a:'504', opts:['494','504','514','524'],tag:'思维训练',   module:'M6', step_ok:4, step_slow:4 },
+  { q:'37 × 6 = ?',  a:'222', opts:['220','222','224','212'],tag:'两位数乘法', module:'M5', step_ok:3, step_slow:5 },
+  { q:'504 ÷ 7 = ?', a:'72',  opts:['71','72','73','70'],    tag:'三位数除法', module:'M6', step_ok:3, step_slow:5 },
+  { q:'69 × 8 = ?',  a:'552', opts:['542','552','562','532'],tag:'两位数乘法', module:'M5', step_ok:5, step_slow:5 },
+  { q:'432 ÷ 8 = ?', a:'54',  opts:['53','54','55','56'],    tag:'三位数除法', module:'M6', step_ok:5, step_slow:5 }
+],
+5: [
+  { q:'34 × 25 = ?',  a:'850',  opts:['840','850','860','870'],    tag:'多位数乘法', module:'M7', step_ok:2, step_slow:2 },
+  { q:'0.4 + 0.8 = ?',a:'1.2',  opts:['1.1','1.2','1.3','0.12'],  tag:'小数加法',   module:'M8', step_ok:2, step_slow:2 },
+  { q:'3.5 - 1.8 = ?',a:'1.7',  opts:['1.6','1.7','1.8','2.7'],   tag:'小数减法',   module:'M8', step_ok:2, step_slow:3 },
+  { q:'768 ÷ 24 = ?', a:'32',   opts:['30','31','32','33'],        tag:'多位数除法', module:'M7', step_ok:3, step_slow:3 },
+  { q:'? × 36 =1008', a:'28',   opts:['26','27','28','29'],        tag:'思维训练',   module:'M7', step_ok:4, step_slow:4 },
+  { q:'0.6 × 5 = ?',  a:'3',    opts:['0.3','3','30','0.03'],      tag:'小数乘法',   module:'M8', step_ok:3, step_slow:2 },
+  { q:'56 × 37 = ?',  a:'2072', opts:['2052','2062','2072','2082'],tag:'多位数乘法', module:'M7', step_ok:3, step_slow:5 },
+  { q:'1.8 ÷ 6 = ?',  a:'0.3',  opts:['0.2','0.3','0.4','3'],     tag:'小数除法',   module:'M8', step_ok:3, step_slow:3 },
+  { q:'864 ÷ 32 = ?', a:'27',   opts:['25','26','27','28'],        tag:'多位数除法', module:'M7', step_ok:5, step_slow:5 },
+  { q:'48 × 52 = ?',  a:'2496', opts:['2476','2486','2496','2506'],tag:'多位数乘法', module:'M7', step_ok:5, step_slow:5 }
+],
+6: [
+  { q:'3/4 + 1/2 = ?', a:'5/4', opts:['3/4','5/4','4/6','1'],    tag:'分数加法',  module:'M8', step_ok:2, step_slow:2 },
+  { q:'5/6 - 1/3 = ?', a:'1/2', opts:['1/3','1/2','2/3','1/6'],  tag:'分数减法',  module:'M8', step_ok:3, step_slow:2 },
+  { q:'2/3 × 3/4 = ?', a:'1/2', opts:['1/3','1/2','6/12','2/7'], tag:'分数乘法',  module:'M8', step_ok:3, step_slow:3 },
+  { q:'3/4 ÷ 3/8 = ?', a:'2',   opts:['1','2','3','1/2'],        tag:'分数除法',  module:'M8', step_ok:3, step_slow:4 },
+  { q:'1.25 × 8 = ?',  a:'10',  opts:['8','9','10','11'],         tag:'小数乘法',  module:'M8', step_ok:3, step_slow:5 },
+  { q:'0.72÷0.9 = ?',  a:'0.8', opts:['0.7','0.8','0.9','8'],    tag:'小数除法',  module:'M8', step_ok:3, step_slow:5 },
+  { q:'2/5+3/10 = ?',  a:'7/10',opts:['5/15','1/2','7/10','9/10'],tag:'分数加法', module:'M8', step_ok:4, step_slow:3 },
+  { q:'? × 2/3 = 4',   a:'6',   opts:['4','5','6','8'],           tag:'思维训练',  module:'M8', step_ok:4, step_slow:4 },
+  { q:'3.6 ÷ 1.2 = ?', a:'3',   opts:['0.3','2','3','30'],        tag:'小数除法',  module:'M8', step_ok:5, step_slow:5 },
+  { q:'4/5 - 2/10=?',  a:'3/5', opts:['2/5','3/5','6/10','1/2'], tag:'分数减法',  module:'M8', step_ok:5, step_slow:5 }
+]
+};
+
+var SPEED = { 1:{fast:4,slow:8}, 2:{fast:5,slow:10}, 3:{fast:6,slow:12}, 4:{fast:7,slow:14}, 5:{fast:8,slow:15}, 6:{fast:8,slow:16} };
+
+var MODULE_NAMES = {
+  M1:'一年级 · 20以内加减法',     M2:'二年级 · 100以内加减法',
+  M3:'三年级 · 乘除法基础',       M4:'三年级 · 三位数加减法',
+  M5:'四年级 · 两位数乘法',       M6:'四年级 · 三位数除法',
+  M7:'五年级 · 多位数乘除法',     M8:'五六年级 · 小数与分数'
+};
+var MODULE_DETAIL = {
+  M1:'一年级阶段。孩子正在建立对数字大小与变化关系的最初感知，这个阶段的核心不是背答案，而是真正"感受到"加和减意味着什么。',
+  M2:'二年级阶段。在更大的数域里继续感知数量的变化，理解进位与退位不是规则，而是数字之间自然发生的故事。',
+  M3:'二三年级阶段。乘法和除法是同一件事的两面，这个阶段需要感知它们之间的对称关系，而不仅仅是背诵口诀。',
+  M4:'三年级阶段。当数字变成三位数，位值的作用变得更加关键，理解每一位数字"住在哪里"是这个阶段的核心。',
+  M5:'三四年级阶段。乘法可以被拆开、重组、合并，感受这种灵活性，是这个阶段计算能力跃升的关键所在。',
+  M6:'三四年级阶段。除法需要对数量有更细腻的感知，理解"能分几次、还剩多少"背后的数感，而不是套试商步骤。',
+  M7:'四五年级阶段。运算范围扩大，但核心依然是对数量关系的感知。这个阶段需要建立对大数乘除的整体估判能力。',
+  M8:'五六年级阶段。数的世界从整数延伸到小数和分数，需要重新感知"一个数"可以有多少种表达方式和相互关系。'
+};
+
+// ── functions ──────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); });
+  document.getElementById(id).classList.add('on');
+}
+
+function selectGrade(g, el) {
+  grade = g;
+  document.querySelectorAll('.grade-btn').forEach(function(b){ b.classList.remove('sel'); });
+  el.classList.add('sel');
+}
+
+function startTest() {
+  if (!grade) { alert('请先选择孩子的年级'); return; }
+  questionIndex = 0;
+  results = [];
+  showScreen('s1');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  var qs = BANKS[grade];
+  if (questionIndex >= qs.length) {
+    clearInterval(timerInterval);
+    buildReport();
+    return;
+  }
+  var q = qs[questionIndex];
+  var total = qs.length;
+
+  document.getElementById('q-num-label').textContent = '第' + (questionIndex + 1) + '题 / 共' + total + '题';
+  document.getElementById('progress-bar').style.width = (((questionIndex + 1) / total) * 100) + '%';
+  document.getElementById('question-text').textContent = q.q;
+  document.getElementById('feedback-text').textContent = '';
+  document.getElementById('feedback-text').className = 'feedback';
+
+  var timerEl = document.getElementById('timer-display');
+  timerEl.textContent = '0秒';
+  timerEl.className = 'timer';
+
+  clearInterval(timerInterval);
+  timerSeconds = 0;
+  questionStartTime = Date.now();
+
+  timerInterval = setInterval(function() {
+    timerSeconds++;
+    timerEl.textContent = timerSeconds + '秒';
+    if (timerSeconds >= SPEED[grade].slow) {
+      timerEl.className = 'timer warn';
+    }
+  }, 1000);
+
+  // render options
+  var opts = q.opts.slice();
+  shuffle(opts);
+  var grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  opts.forEach(function(o) {
+    var btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.textContent = o;
+    btn.onclick = function() { handleAnswer(o, q, grid); };
+    grid.appendChild(btn);
+  });
+}
+
+function handleAnswer(chosen, q, grid) {
+  clearInterval(timerInterval);
+  var elapsed = Math.round((Date.now() - questionStartTime) / 1000);
+  var thr = SPEED[grade];
+  var correct = (String(chosen) === String(q.a));
+  var speed = elapsed <= thr.fast ? 'fast' : (elapsed <= thr.slow ? 'medium' : 'slow');
+
+  results.push({
+    correct: correct,
+    elapsed: elapsed,
+    speed: speed,
+    tag: q.tag,
+    module: q.module,
+    step_ok: q.step_ok,
+    step_slow: q.step_slow,
+    q: q.q,
+    a: q.a,
+    chosen: chosen
+  });
+
+  // highlight answers
+  Array.from(grid.children).forEach(function(btn) {
+    btn.disabled = true;
+    if (String(btn.textContent) === String(q.a)) {
+      btn.classList.add('correct');
+    } else if (String(btn.textContent) === String(chosen) && !correct) {
+      btn.classList.add('wrong');
+    }
+  });
+
+  var fb = document.getElementById('feedback-text');
+  if (correct) {
+    fb.textContent = elapsed <= thr.fast ? '✓ 正确！反应很快' : '✓ 正确！用时 ' + elapsed + ' 秒';
+    fb.className = 'feedback ok';
+  } else {
+    fb.textContent = '✗ 正确答案是 ' + q.a;
+    fb.className = 'feedback bad';
+  }
+
+  setTimeout(function() {
+    questionIndex++;
+    renderQuestion();
+  }, 1100);
+}
+
+function buildReport() {
+  showScreen('s2');
+
+  var total = results.length;
+  var correctList = results.filter(function(r){ return r.correct; });
+  var wrongList   = results.filter(function(r){ return !r.correct; });
+  var slowList    = results.filter(function(r){ return r.correct && r.speed === 'slow'; });
+  var fastList    = results.filter(function(r){ return r.correct && r.speed === 'fast'; });
+
+  var correct = correctList.length;
+  var acc = Math.round(correct / total * 100);
+  var avgT = Math.round(results.reduce(function(s,r){ return s + r.elapsed; }, 0) / total);
+  var thr = SPEED[grade];
+
+  // scores 1-5
+  var accScore  = acc >= 90 ? 5 : acc >= 80 ? 4 : acc >= 65 ? 3 : acc >= 50 ? 2 : 1;
+  var spdScore  = avgT <= thr.fast ? 5 : avgT <= thr.fast * 1.5 ? 4 : avgT <= thr.slow ? 3 : avgT <= thr.slow * 1.5 ? 2 : 1;
+  var combo     = Math.round((accScore + spdScore) / 2);
+
+  var LEVELS = {
+    5: { lbl:'S · 超出年级水平', bg:'rgba(52,211,153,0.15)',  col:'#34d399' },
+    4: { lbl:'A · 达到年级水平', bg:'rgba(124,140,255,0.15)', col:'#7c8cff' },
+    3: { lbl:'B · 基本达标',     bg:'rgba(251,191,36,0.15)',  col:'#fbbf24' },
+    2: { lbl:'C · 需要强化',     bg:'rgba(248,113,113,0.15)', col:'#f87171' },
+    1: { lbl:'D · 需要系统补救', bg:'rgba(248,113,113,0.15)', col:'#f87171' }
+  };
+  var lv = LEVELS[combo] || LEVELS[3];
+
+  var wrongTags = unique(wrongList.map(function(r){ return r.tag; }));
+  var slowTags  = unique(slowList.map(function(r){ return r.tag; }));
+  var wrongMods = unique(wrongList.map(function(r){ return r.module; }));
+  var slowMods  = unique(slowList.map(function(r){ return r.module; }));
+
+  // determine target step
+  var targetStep;
+  if (wrongList.length >= 5)      targetStep = 1;
+  else if (wrongList.length >= 3) targetStep = 2;
+  else if (wrongList.length >= 1) targetStep = 3;
+  else if (slowList.length >= 4)  targetStep = 5;
+  else if (slowList.length >= 2)  targetStep = 5;
+  else                             targetStep = 6;
+
+  // headline + desc
+  var headline, desc;
+  if (accScore >= 4 && spdScore >= 4) {
+    headline = '计算能力优秀，准确率与速度均达标';
+    desc = '孩子在正确率和反应速度两个维度表现均衡且良好，已达到或超出本年级的计算标准。建议进入更高年级内容，防止能力停滞。';
+  } else if (accScore >= 4 && spdScore < 4) {
+    headline = '算得对，但算得慢——最佳路径尚未形成';
+    desc = '正确率高说明计算方法已经掌握，速度偏慢说明还没有找到最简洁的思维路径，反应还需要经过一段推算。星星数感精练的"数感五"阶段专门训练这种能力，帮助孩子从"想出来"走向"脱口而出"。';
+  } else if (accScore < 4 && spdScore >= 4) {
+    headline = '算得快，但答错较多——需先建立感知再提速度';
+    desc = '速度尚可，但正确率偏低说明对部分运算的感知还不够扎实，存在概念上的盲区。这个阶段加快速度反而会固化错误，建议回到数感一、数感二重新建立稳固的感知基础。';
+  } else {
+    headline = '准确率和速度均需提升——建议从感知基础入手';
+    desc = '当前阶段说明孩子对本年级的运算还没有建立稳定的感知和方法。不建议大量做题，应该从"感受数字之间的关系"开始，按照星星数感精练的顺序逐步推进，地基稳了速度自然会来。';
+  }
+
+  // main module
+  var mainModule = wrongMods[0] || slowMods[0] || ('M' + grade);
+
+  // speed bar width calculation
+  var spdPct = Math.max(10, Math.min(100, Math.round(100 - ((avgT - thr.fast) / Math.max(1, thr.slow - thr.fast)) * 60)));
+  var accBarColor = accScore>=4 ? '#34d399' : accScore>=3 ? '#fbbf24' : '#f87171';
+  var spdBarColor = spdScore>=4 ? '#34d399' : spdScore>=3 ? '#fbbf24' : '#f87171';
+  var accValColor = accBarColor;
+  var spdValColor = spdBarColor;
+
+  var accNote = accScore >= 4 ? '良好，计算方法已掌握' : accScore >= 3 ? '一般，存在薄弱环节' : '需要加强，建议系统训练';
+  var spdNote = spdScore >= 4 ? '速度达标，数感已内化' : spdScore >= 3 ? '中等，最佳路径尚未形成' : '偏慢，需要专项速度训练';
+
+  // issue blocks html
+  var issueHTML = '';
+  if (wrongList.length === 0 && slowList.length === 0) {
+    issueHTML = '<p style="font-size:13px;color:var(--green);padding:6px 0">未发现明显问题，准确率和速度均表现良好。</p>';
+  } else {
+    issueHTML = '<div class="issue-list">';
+    if (wrongList.length > 0) {
+      issueHTML += '<div class="issue-item">'
+        + '<div class="issue-dot" style="background:#f87171"></div>'
+        + '<div><span class="issue-tag" style="background:rgba(248,113,113,0.15);color:#f87171">答错 ' + wrongList.length + ' 题</span>'
+        + '<div class="issue-text">涉及：' + wrongTags.slice(0,3).join('、') + (wrongTags.length>3?'等':'') + '<br>'
+        + '诊断：计算方法尚未稳定建立，建议先通过数感一、数感二夯实基础，避免大量机械刷题。</div></div></div>';
+    }
+    if (slowList.length > 0) {
+      issueHTML += '<div class="issue-item">'
+        + '<div class="issue-dot" style="background:#fbbf24"></div>'
+        + '<div><span class="issue-tag" style="background:rgba(251,191,36,0.15);color:#fbbf24">答对但偏慢 ' + slowList.length + ' 题</span>'
+        + '<div class="issue-text">涉及：' + slowTags.slice(0,3).join('、') + (slowTags.length>3?'等':'') + '<br>'
+        + '诊断：计算方法会了但最佳路径尚未形成——停留在数感三、数感四阶段，需要专项的数感五训练，让反应速度真正提升。</div></div></div>';
+    }
+    issueHTML += '</div>';
+  }
+
+  // 6-step map html
+  var stepNums = ['①','②','③','④','⑤','⑥'];
+  var stepHTML = '<div class="step-list">';
+  STEPS.forEach(function(s, i) {
+    var stepId = i + 1;
+    var isDone = stepId < targetStep && (wrongList.length === 0 || stepId <= 2 && wrongList.length <= 1);
+    var isTgt  = stepId === targetStep;
+    var cls    = isTgt ? 'step-item target' : isDone ? 'step-item done' : 'step-item';
+    var status = isTgt ? '← 当前训练重点' : isDone ? '已完成' : '待解锁';
+    stepHTML += '<div class="' + cls + '">'
+      + '<div class="step-circle">' + stepNums[i] + '</div>'
+      + '<div><div class="step-name">' + s.name + '</div>'
+      + '<div class="step-detail">' + s.desc + '</div>'
+      + '<span class="step-status">' + status + '</span></div></div>';
+  });
+  stepHTML += '</div>';
+
+  // secondary modules
+  var allWeakMods = unique(wrongMods.concat(slowMods)).filter(function(m){ return m !== mainModule; });
+  var secModNote = allWeakMods.length > 0
+    ? '<p style="font-size:12px;color:var(--text-sub);line-height:1.7;margin-top:10px">同时检测到 '
+      + allWeakMods.slice(0,2).map(function(m){ return MODULE_NAMES[m]||m; }).join('、')
+      + ' 存在薄弱，建议完成主模块后跟进。</p>'
+    : '';
+
+  // speed target
+  var speedTarget = grade <= 2 ? '5秒' : grade <= 4 ? '8秒' : '12秒';
+
+  // final html
+  var html = ''
+    + '<div class="level-pill" style="background:' + lv.bg + ';color:' + lv.col + '">' + lv.lbl + '</div>'
+    + '<div class="report-title">' + headline + '</div>'
+    + '<div class="report-desc">' + desc + '</div>'
+
+    + '<div class="stats-row">'
+    + '<div class="stat-cell"><div class="stat-num">' + correct + '/' + total + '</div><div class="stat-lbl">答对题数</div></div>'
+    + '<div class="stat-cell"><div class="stat-num">' + acc + '%</div><div class="stat-lbl">正确率</div></div>'
+    + '<div class="stat-cell"><div class="stat-num">' + avgT + 's</div><div class="stat-lbl">平均用时</div></div>'
+    + '<div class="stat-cell"><div class="stat-num">' + fastList.length + '</div><div class="stat-lbl">快速答对</div></div>'
+    + '</div>'
+
+    + '<div class="section-title">双维度分析：准确度 vs 速度</div>'
+    + '<div class="dual-grid">'
+    + '<div class="axis-card"><div class="axis-label">准确度</div>'
+    + '<div class="axis-val" style="color:' + accValColor + '">' + acc + '%</div>'
+    + '<div class="axis-track"><div class="axis-bar" style="width:' + acc + '%;background:' + accBarColor + '"></div></div>'
+    + '<div class="axis-note">' + accNote + '</div></div>'
+    + '<div class="axis-card"><div class="axis-label">计算速度</div>'
+    + '<div class="axis-val" style="color:' + spdValColor + '">' + avgT + 's/题</div>'
+    + '<div class="axis-track"><div class="axis-bar" style="width:' + spdPct + '%;background:' + spdBarColor + '"></div></div>'
+    + '<div class="axis-note">' + spdNote + '</div></div>'
+    + '</div>'
+    + issueHTML
+
+    + '<div class="divider"></div>'
+    + '<div class="section-title">星星数感精练 · 成长阶段定位</div>'
+    + stepHTML
+
+    + '<div class="divider"></div>'
+    + '<div class="section-title">推荐训练方向</div>'
+    + '<div class="mod-box">'
+    + '<div class="mod-name">⭐ ' + (MODULE_NAMES[mainModule] || mainModule) + '</div>'
+    + '<div class="mod-detail">' + (MODULE_DETAIL[mainModule] || '') + '<br><br>'
+    + '训练切入点：从数感' + ['一','二','三','四','五','六'][targetStep-1] + '阶段开始，目标是本年级所有题型达到 ' + speedTarget + ' 内稳定秒答。</div>'
+    + '<div class="price-row">'
+    + '<div><span class="price-now">¥99</span><span class="price-orig">¥199</span></div>'
+    + '<span class="price-note">直播专属价 · 含课程包+社群答疑</span>'
+    + '</div></div>'
+    + secModNote;
+
+  document.getElementById('report-card').innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+function shuffle(arr) {
+  for (var i = arr.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+}
+function unique(arr) {
+  return arr.filter(function(v, i, a){ return a.indexOf(v) === i; });
+}
+function restartTest() {
+  clearInterval(timerInterval);
+  grade = 0; questionIndex = 0; results = [];
+  document.querySelectorAll('.grade-btn').forEach(function(b){ b.classList.remove('sel'); });
+  showScreen('s0');
+  window.scrollTo(0, 0);
+}
+
+// ── starfield + galaxy + planets ──────────────────────────────────────
+(function(){
+  var canvas = document.getElementById('starfield');
+  var ctx = canvas.getContext('2d');
+  var W, H;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ── stars ──
+  var stars = [];
+  for (var i = 0; i < 200; i++) {
+    stars.push({
+      x: Math.random(), y: Math.random(),
+      r: Math.random() * 1.3 + 0.15,
+      base: Math.random() * 0.45 + 0.1,
+      speed: Math.random() * 0.7 + 0.25,
+      phase: Math.random() * Math.PI * 2,
+      color: Math.random() > 0.88 ? '#c4b5fd'
+           : Math.random() > 0.72 ? '#818cf8'
+           : '#e2e8f0'
+    });
+  }
+
+  // ── planets (fixed positions, drawn once per frame at low opacity) ──
+  var planets = [
+    { x:0.82, y:0.12, r:22, color:'#6366f1', ring:true,  ringColor:'rgba(167,139,250,0.25)', alpha:0.18 },
+    { x:0.10, y:0.28, r:11, color:'#0ea5e9', ring:false,  alpha:0.20 },
+    { x:0.91, y:0.68, r:15, color:'#7c3aed', ring:false,  alpha:0.15 },
+    { x:0.05, y:0.80, r: 8, color:'#a78bfa', ring:false,  alpha:0.13 }
+  ];
+
+  // ── shooting star state ──
+  var shoot = null;
+  function spawnShoot() {
+    var sx = Math.random() * 0.6 + 0.1;
+    shoot = { x:sx, y:0.05 + Math.random()*0.2,
+              vx: 0.003 + Math.random()*0.002,
+              vy: 0.002 + Math.random()*0.0015,
+              life:1, tail:[] };
+  }
+  setInterval(function(){ if(!shoot) spawnShoot(); }, 4000 + Math.random()*4000);
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+
+    // ── galaxy band (very subtle, stays in upper-right quadrant area) ──
+    var gx = W * 0.65, gy = H * 0.25;
+    var grd = ctx.createRadialGradient(gx, gy, 0, gx, gy, W * 0.38);
+    grd.addColorStop(0,   'rgba(124,58,237, 0.055)');
+    grd.addColorStop(0.4, 'rgba(99,102,241, 0.035)');
+    grd.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.save();
+    ctx.translate(gx, gy);
+    ctx.rotate(-0.4);
+    ctx.scale(1, 0.38);
+    ctx.translate(-gx, -gy);
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    // second milky-way streak (lower left, very faint)
+    var g2x = W*0.2, g2y = H*0.7;
+    var grd2 = ctx.createRadialGradient(g2x, g2y, 0, g2x, g2y, W*0.28);
+    grd2.addColorStop(0,   'rgba(139,92,246, 0.04)');
+    grd2.addColorStop(0.5, 'rgba(79,70,229,  0.025)');
+    grd2.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.save();
+    ctx.translate(g2x, g2y);
+    ctx.rotate(0.3);
+    ctx.scale(1, 0.32);
+    ctx.translate(-g2x, -g2y);
+    ctx.fillStyle = grd2;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    // ── planets ──
+    planets.forEach(function(p) {
+      var px = p.x * W, py = p.y * H;
+      // glow halo
+      var halo = ctx.createRadialGradient(px, py, p.r*0.5, px, py, p.r*3.5);
+      halo.addColorStop(0, p.color.replace(')', ', '+(p.alpha*1.2)+')').replace('rgb','rgba'));
+      halo.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(px, py, p.r*3.5, 0, Math.PI*2);
+      ctx.fill();
+      // planet body
+      ctx.globalAlpha = p.alpha;
+      ctx.beginPath();
+      ctx.arc(px, py, p.r, 0, Math.PI*2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+      // ring
+      if (p.ring) {
+        ctx.globalAlpha = p.alpha * 1.5;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.scale(1, 0.28);
+        ctx.beginPath();
+        ctx.arc(0, 0, p.r * 2.2, 0, Math.PI*2);
+        ctx.strokeStyle = p.ringColor || 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+      }
+    });
+
+    // ── twinkling stars ──
+    ctx.globalAlpha = 1;
+    stars.forEach(function(s) {
+      var pulse = s.base + Math.sin(t * s.speed * 0.001 + s.phase) * 0.28;
+      ctx.beginPath();
+      ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI*2);
+      ctx.fillStyle = s.color;
+      ctx.globalAlpha = Math.max(0, pulse);
+      ctx.fill();
+    });
+
+    // ── shooting star ──
+    if (shoot) {
+      shoot.tail.push({x: shoot.x, y: shoot.y});
+      if (shoot.tail.length > 18) shoot.tail.shift();
+      shoot.x += shoot.vx;
+      shoot.y += shoot.vy;
+      shoot.life -= 0.016;
+      if (shoot.life <= 0 || shoot.x > 1 || shoot.y > 1) { shoot = null; }
+      else {
+        for (var ti = 0; ti < shoot.tail.length; ti++) {
+          var frac = ti / shoot.tail.length;
+          ctx.globalAlpha = frac * 0.7 * shoot.life;
+          ctx.beginPath();
+          ctx.arc(shoot.tail[ti].x * W, shoot.tail[ti].y * H, 1.2 * frac + 0.3, 0, Math.PI*2);
+          ctx.fillStyle = '#e0e7ff';
+          ctx.fill();
+        }
+      }
+    }
+
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
