@@ -473,7 +473,7 @@
       <div style="font-size:13px;color:var(--accent);letter-spacing:1px;margin-bottom:4px">✦ 星星数学教练</div>
       <div style="font-size:15px;color:var(--text);font-weight:600;margin-bottom:16px">扫码添加企业微信<br>获取个性化学习方案</div>
       <img src="qr.jpg" alt="企业微信二维码" style="width:190px;height:190px;object-fit:contain;border-radius:14px;display:block;margin:0 auto;border:2px solid rgba(124,140,255,0.2)">
-      <div style="font-size:13px;color:var(--text-sub);margin-top:14px;line-height:1.8">测完截图报告 · 发给老师<br>匹配专属课程方案 · 报名课程</div>
+
     </div>
     <button class="btn btn-outline" onclick="restartTest()" style="margin-top:12px">重新测试</button>
   </div>
@@ -863,10 +863,7 @@ function buildReport() {
     + '<div class="mod-name">⭐ ' + (MODULE_NAMES[mainModule] || mainModule) + '</div>'
     + '<div class="mod-detail">' + (MODULE_DETAIL[mainModule] || '') + '<br><br>'
     + '训练切入点：从数感' + ['一','二','三','四','五','六'][targetStep-1] + '阶段开始，目标是本年级所有题型达到 ' + speedTarget + ' 内稳定秒答。</div>'
-    + '<div class="price-row">'
-    + '<div><span class="price-now">¥99</span><span class="price-orig">¥199</span></div>'
-    + '<span class="price-note">直播专属价 · 含课程包+社群答疑</span>'
-    + '</div></div>'
+    + '</div>'
     + secModNote;
 
   document.getElementById('report-card').innerHTML = html;
